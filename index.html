@@ -1,201 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bike Workout Tracker</title>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script type="module" src="./components/workout-stats.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-        }
-        
-        button:hover {
-            background-color: #0056b3;
-        }
-        
-        .workout-item {
-            background: #f8f9fa;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-        }
-        
-        .workout-date {
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .workout-details {
-            margin-top: 5px;
-            color: #666;
-        }
-        
-        .workout-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .stat-card {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
-            padding: 15px;
-        }
-        
-        .pagination button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            width: auto;
-        }
-        
-        .pagination button:hover {
-            background-color: #0056b3;
-        }
-        
-        .pagination button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .page-info {
-            font-weight: bold;
-            color: #333;
-        }
-        
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #007bff;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      .workout-item {
+        background: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #007bff;
+      }
+
+      .workout-date {
+        font-weight: bold;
+        color: #007bff;
+      }
+
+      .workout-details {
+        margin-top: 5px;
+        color: #666;
+      }
+
+      .workout-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: #e9ecef;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+        padding: 15px;
+      }
+
+      .pagination button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        width: auto;
+      }
+
+      .pagination button:hover {
+        background-color: #0056b3;
+      }
+
+      .pagination button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      .page-info {
+        font-weight: bold;
+        color: #333;
+      }
+
+      .filter-sort-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+      }
+
+      .filter-sort-controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        align-items: end;
+      }
+
+      .filter-group,
+      .sort-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .filter-group label,
+      .sort-group label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+        font-size: 14px;
+      }
+
+      .filter-group input,
+      .sort-group select {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .apply-filters {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .apply-filters:hover {
+        background-color: #0056b3;
+      }
+
+      .clear-filters {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .clear-filters:hover {
+        background-color: #5a6268;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🚴‍♂️ Bike Workout Tracker</h1>
-        
-        <form hx-post="/workouts" hx-target="#workout-list" hx-swap="afterbegin" hx-on::after-request="this.reset()" hx-on::refreshWorkouts="htmx.ajax('GET', '/workouts', '#workout-list')">
-            <div class="form-group">
-                <label for="date">Date:</label>
-                <input type="date" id="date" name="date" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="location">Location:</label>
-                <input type="text" id="location" name="location" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="miles">Miles:</label>
-                <input type="number" id="miles" name="miles" step="0.1" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="time">Time (minutes):</label>
-                <input type="number" id="time" name="time" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="elevation">Elevation Gain (feet):</label>
-                <input type="number" id="elevation" name="elevation" required>
-            </div>
-            
-            <button type="submit">Add Workout</button>
-        </form>
-    </div>
-    
-    <div class="container">
-        <workout-stats></workout-stats>
-    </div>
-    
-    <div class="container">
-        <h2>Recent Workouts</h2>
-        <div id="workout-list" hx-get="/workouts" hx-trigger="load, refreshWorkouts from:body">
-            Loading workouts...
+      <h1>🚴‍♂️ Bike Workout Tracker</h1>
+
+      <form
+        hx-post="/workouts"
+        hx-target="#workout-list"
+        hx-swap="afterbegin"
+        hx-on::after-request="this.reset()"
+        hx-on::refreshWorkouts="htmx.ajax('GET', '/workouts', '#workout-list')"
+      >
+        <div class="form-group">
+          <label for="date">Date:</label>
+          <input type="date" id="date" name="date" required />
         </div>
+
+        <div class="form-group">
+          <label for="location">Location:</label>
+          <input type="text" id="location" name="location" required />
+        </div>
+
+        <div class="form-group">
+          <label for="miles">Miles:</label>
+          <input type="number" id="miles" name="miles" step="0.1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="time">Time (minutes):</label>
+          <input type="number" id="time" name="time" required />
+        </div>
+
+        <div class="form-group">
+          <label for="elevation">Elevation Gain (feet):</label>
+          <input type="number" id="elevation" name="elevation" required />
+        </div>
+
+        <button type="submit">Add Workout</button>
+      </form>
     </div>
-    
+
+    <div class="container">
+      <workout-stats></workout-stats>
+    </div>
+
+    <div class="container">
+      <h2>Recent Workouts</h2>
+
+      <div class="filter-sort-controls">
+        <div class="filter-group">
+          <label for="location-filter">Filter by Location:</label>
+          <input
+            type="text"
+            id="location-filter"
+            placeholder="Enter location..."
+            name="location"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="min-miles">Min Miles:</label>
+          <input
+            type="number"
+            id="min-miles"
+            step="0.1"
+            placeholder="0"
+            name="min-miles"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="min-time">Min Time (min):</label>
+          <input type="number" id="min-time" placeholder="0" name="min-time" />
+        </div>
+
+        <div class="filter-group">
+          <label for="min-elevation">Min Elevation (ft):</label>
+          <input
+            type="number"
+            id="min-elevation"
+            placeholder="0"
+            name="min-elevation"
+          />
+        </div>
+
+        <div class="sort-group">
+          <label for="sort">Sort by:</label>
+          <select id="sort" name="sort">
+            <option value="date">Date</option>
+            <option value="location">Location</option>
+            <option value="miles">Miles</option>
+            <option value="time">Time</option>
+            <option value="elevation">Elevation</option>
+          </select>
+        </div>
+
+        <div class="sort-group">
+          <label for="order">Order:</label>
+          <select id="order" name="order">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button type="button" onclick="applyFilters()" class="apply-filters">
+            Apply Filters
+          </button>
+          <button type="button" onclick="clearFilters()" class="clear-filters">
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      <div
+        id="workout-list"
+        hx-get="/workouts"
+        hx-trigger="load, refreshWorkouts from:body"
+      >
+        Loading workouts...
+      </div>
+    </div>
+
     <script>
-        document.body.addEventListener('htmx:afterSwap', () => {
-            const statsElement = document.querySelector('workout-stats');
-            if (statsElement && statsElement.updateStats) {
-                statsElement.updateStats();
-            }
-        });
+      document.body.addEventListener("htmx:afterSwap", () => {
+        const statsElement = document.querySelector("workout-stats");
+        if (statsElement && statsElement.updateStats) {
+          statsElement.updateStats();
+        }
+      });
+
+      function applyFilters() {
+        // Build query parameters from form values
+        const params = new URLSearchParams();
+
+        const locationFilter = document.getElementById("location-filter").value;
+        const minMiles = document.getElementById("min-miles").value;
+        const minTime = document.getElementById("min-time").value;
+        const minElevation = document.getElementById("min-elevation").value;
+        const sort = document.getElementById("sort").value;
+        const order = document.getElementById("order").value;
+
+        if (locationFilter) params.set("location", locationFilter);
+        if (minMiles) params.set("min-miles", minMiles);
+        if (minTime) params.set("min-time", minTime);
+        if (minElevation) params.set("min-elevation", minElevation);
+        if (sort !== "date") params.set("sort", sort);
+        if (order !== "desc") params.set("order", order);
+
+        // Apply filters
+        const url =
+          "/workouts" + (params.toString() ? "?" + params.toString() : "");
+        htmx.ajax("GET", url, "#workout-list");
+      }
+
+      function clearFilters() {
+        // Clear all filter inputs
+        document.getElementById("location-filter").value = "";
+        document.getElementById("min-miles").value = "";
+        document.getElementById("min-time").value = "";
+        document.getElementById("min-elevation").value = "";
+
+        // Reset sort options to defaults
+        document.getElementById("sort").value = "date";
+        document.getElementById("order").value = "desc";
+
+        // Reload workouts with default parameters
+        htmx.ajax("GET", "/workouts", "#workout-list");
+      }
     </script>
-</body>
+  </body>
 </html>

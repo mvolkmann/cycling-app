@@ -23,15 +23,77 @@ function getAllWorkouts() {
     return stmt.all();
 }
 
-function getWorkouts(page = 1, limit = 5) {
+function getWorkouts(page = 1, limit = 5, filters = {}, sort = 'date', order = 'desc') {
     const offset = (page - 1) * limit;
-    const stmt = db.prepare('SELECT * FROM workouts ORDER BY date DESC, id DESC LIMIT ? OFFSET ?');
-    return stmt.all(limit, offset);
+    
+    let query = 'SELECT * FROM workouts WHERE 1=1';
+    const params = [];
+    
+    // Add filters
+    if (filters.location && filters.location.trim() !== '') {
+        query += ' AND location LIKE ?';
+        params.push(`%${filters.location}%`);
+    }
+    
+    if (filters.minMiles && filters.minMiles !== '') {
+        query += ' AND miles >= ?';
+        params.push(parseFloat(filters.minMiles));
+    }
+    
+    if (filters.minTime && filters.minTime !== '') {
+        query += ' AND time >= ?';
+        params.push(parseInt(filters.minTime));
+    }
+    
+    if (filters.minElevation && filters.minElevation !== '') {
+        query += ' AND elevation >= ?';
+        params.push(parseInt(filters.minElevation));
+    }
+    
+    // Add sorting
+    const validSortColumns = ['date', 'location', 'miles', 'time', 'elevation'];
+    const sortColumn = validSortColumns.includes(sort) ? sort : 'date';
+    const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+    
+    query += ` ORDER BY ${sortColumn} ${sortOrder}`;
+    if (sortColumn !== 'date') {
+        query += ', date DESC'; // Secondary sort by date
+    }
+    
+    query += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+    
+    const stmt = db.prepare(query);
+    return stmt.all(...params);
 }
 
-function getTotalWorkoutCount() {
-    const stmt = db.prepare('SELECT COUNT(*) as count FROM workouts');
-    return stmt.get().count;
+function getTotalWorkoutCount(filters = {}) {
+    let query = 'SELECT COUNT(*) as count FROM workouts WHERE 1=1';
+    const params = [];
+    
+    // Add same filters as getWorkouts
+    if (filters.location && filters.location.trim() !== '') {
+        query += ' AND location LIKE ?';
+        params.push(`%${filters.location}%`);
+    }
+    
+    if (filters.minMiles && filters.minMiles !== '') {
+        query += ' AND miles >= ?';
+        params.push(parseFloat(filters.minMiles));
+    }
+    
+    if (filters.minTime && filters.minTime !== '') {
+        query += ' AND time >= ?';
+        params.push(parseInt(filters.minTime));
+    }
+    
+    if (filters.minElevation && filters.minElevation !== '') {
+        query += ' AND elevation >= ?';
+        params.push(parseInt(filters.minElevation));
+    }
+    
+    const stmt = db.prepare(query);
+    return stmt.get(...params).count;
 }
 
 function addWorkout(workout) {
@@ -61,8 +123,20 @@ app.get('/workouts', (c) => {
     const page = parseInt(c.req.query('page')) || 1;
     const limit = 5;
     
-    const workouts = getWorkouts(page, limit);
-    const totalCount = getTotalWorkoutCount();
+    // Get filter parameters
+    const filters = {
+        location: c.req.query('location') || '',
+        minMiles: c.req.query('min-miles') || '',
+        minTime: c.req.query('min-time') || '',
+        minElevation: c.req.query('min-elevation') || ''
+    };
+    
+    // Get sort parameters
+    const sort = c.req.query('sort') || 'date';
+    const order = c.req.query('order') || 'desc';
+    
+    const workouts = getWorkouts(page, limit, filters, sort, order);
+    const totalCount = getTotalWorkoutCount(filters);
     const totalPages = Math.ceil(totalCount / limit);
     
     let html = '';
@@ -85,17 +159,28 @@ app.get('/workouts', (c) => {
     if (html === '') {
         html = '<p>No workouts recorded yet. Add your first workout above!</p>';
     } else {
-        // Add pagination controls
+        // Add pagination controls with filters preserved
         html += '<div class="pagination">';
         
+        // Build query string for filters
+        const queryParams = new URLSearchParams();
+        if (filters.location) queryParams.set('location', filters.location);
+        if (filters.minMiles) queryParams.set('min-miles', filters.minMiles);
+        if (filters.minTime) queryParams.set('min-time', filters.minTime);
+        if (filters.minElevation) queryParams.set('min-elevation', filters.minElevation);
+        if (sort !== 'date') queryParams.set('sort', sort);
+        if (order !== 'desc') queryParams.set('order', order);
+        
+        const baseQuery = queryParams.toString() ? `&${queryParams.toString()}` : '';
+        
         if (page > 1) {
-            html += `<button hx-get="/workouts?page=${page - 1}" hx-target="#workout-list">Previous</button>`;
+            html += `<button hx-get="/workouts?page=${page - 1}${baseQuery}" hx-target="#workout-list">Previous</button>`;
         }
         
         html += `<span class="page-info">Page ${page} of ${totalPages}</span>`;
         
         if (page < totalPages) {
-            html += `<button hx-get="/workouts?page=${page + 1}" hx-target="#workout-list">Next</button>`;
+            html += `<button hx-get="/workouts?page=${page + 1}${baseQuery}" hx-target="#workout-list">Next</button>`;
         }
         
         html += '</div>';
