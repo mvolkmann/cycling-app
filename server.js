@@ -19,8 +19,19 @@ db.exec(`
 `);
 
 function getAllWorkouts() {
-    const stmt = db.prepare('SELECT * FROM workouts ORDER BY date DESC');
+    const stmt = db.prepare('SELECT * FROM workouts ORDER BY date DESC, id DESC');
     return stmt.all();
+}
+
+function getWorkouts(page = 1, limit = 5) {
+    const offset = (page - 1) * limit;
+    const stmt = db.prepare('SELECT * FROM workouts ORDER BY date DESC, id DESC LIMIT ? OFFSET ?');
+    return stmt.all(limit, offset);
+}
+
+function getTotalWorkoutCount() {
+    const stmt = db.prepare('SELECT COUNT(*) as count FROM workouts');
+    return stmt.get().count;
 }
 
 function addWorkout(workout) {
@@ -47,16 +58,20 @@ function getWorkoutStats() {
 app.use('/*', serveStatic({ root: './' }));
 
 app.get('/workouts', (c) => {
-    const workouts = getAllWorkouts();
+    const page = parseInt(c.req.query('page')) || 1;
+    const limit = 5;
+    
+    const workouts = getWorkouts(page, limit);
+    const totalCount = getTotalWorkoutCount();
+    const totalPages = Math.ceil(totalCount / limit);
     
     let html = '';
     workouts.forEach(workout => {
-        const date = new Date(workout.date).toLocaleDateString();
-        const time = new Date(workout.date).toLocaleTimeString();
+        const displayDate = new Date(workout.date).toLocaleDateString();
         
         html += `
             <div class="workout-item">
-                <div class="workout-date">${date} at ${time}</div>
+                <div class="workout-date">${displayDate}</div>
                 <div class="workout-details">
                     📍 ${workout.location} • 
                     🚴‍♂️ ${workout.miles} miles • 
@@ -69,6 +84,21 @@ app.get('/workouts', (c) => {
     
     if (html === '') {
         html = '<p>No workouts recorded yet. Add your first workout above!</p>';
+    } else {
+        // Add pagination controls
+        html += '<div class="pagination">';
+        
+        if (page > 1) {
+            html += `<button hx-get="/workouts?page=${page - 1}" hx-target="#workout-list">Previous</button>`;
+        }
+        
+        html += `<span class="page-info">Page ${page} of ${totalPages}</span>`;
+        
+        if (page < totalPages) {
+            html += `<button hx-get="/workouts?page=${page + 1}" hx-target="#workout-list">Next</button>`;
+        }
+        
+        html += '</div>';
     }
     
     return c.html(html);
@@ -76,10 +106,10 @@ app.get('/workouts', (c) => {
 
 app.post('/workouts', async (c) => {
     const body = await c.req.parseBody();
-    const { location, miles, time, elevation } = body;
+    const { date, location, miles, time, elevation } = body;
     
     const workout = {
-        date: new Date().toISOString(),
+        date: date,
         location: location,
         miles: parseFloat(miles),
         time: parseInt(time),
@@ -88,12 +118,11 @@ app.post('/workouts', async (c) => {
     
     const savedWorkout = addWorkout(workout);
     
-    const date = new Date(savedWorkout.date).toLocaleDateString();
-    const timeStr = new Date(savedWorkout.date).toLocaleTimeString();
+    const displayDate = new Date(savedWorkout.date).toLocaleDateString();
     
     const html = `
         <div class="workout-item">
-            <div class="workout-date">${date} at ${timeStr}</div>
+            <div class="workout-date">${displayDate}</div>
             <div class="workout-details">
                 📍 ${savedWorkout.location} • 
                 🚴‍♂️ ${savedWorkout.miles} miles • 
@@ -103,6 +132,7 @@ app.post('/workouts', async (c) => {
         </div>
     `;
     
+    c.header('HX-Trigger', 'refreshWorkouts');
     return c.html(html);
 });
 
@@ -117,34 +147,6 @@ app.get('/api/stats', (c) => {
     });
 });
 
-app.get('/summary', (c) => {
-    const stats = getWorkoutStats();
-    
-    const totalMiles = stats.totalMiles || 0;
-    const totalTime = stats.totalTime || 0;
-    const totalElevation = stats.totalElevation || 0;
-    
-    const html = `
-        <div class="summary">
-            <div class="summary-stats">
-                <div class="summary-item">
-                    <div class="summary-value">${totalMiles.toFixed(1)}</div>
-                    <div class="summary-label">Total Miles</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${totalTime}</div>
-                    <div class="summary-label">Total Minutes</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${totalElevation}</div>
-                    <div class="summary-label">Total Elevation (ft)</div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    return c.html(html);
-});
 
 const PORT = process.env.PORT || 3000;
 serve({
